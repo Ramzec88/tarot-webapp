@@ -1,13 +1,8 @@
 {
-  "functions": {
-    "app.html": {
-      "runtime": "@vercel/static"
-    }
-  },
   "rewrites": [
     {
       "source": "/app",
-      "destination": "/app.html"
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -15,8 +10,12 @@
       "source": "/(.*)",
       "headers": [
         {
-          "key": "X-Frame-Options", 
+          "key": "X-Frame-Options",
           "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options", 
+          "value": "nosniff"
         }
       ]
     }
