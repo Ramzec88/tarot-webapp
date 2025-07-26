@@ -1,0 +1,24 @@
+{
+  "functions": {
+    "app.html": {
+      "runtime": "@vercel/static"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/app",
+      "destination": "/app.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options", 
+          "value": "SAMEORIGIN"
+        }
+      ]
+    }
+  ]
+}
