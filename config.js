@@ -1,6 +1,6 @@
 const API_CONFIG = {
     // Ваш n8n webhook URL (замените на реальный из n8n)
-    generatePrediction: 'https://romanmedn8n.ru/webhook-test/webapp-api',
+    generatePrediction: 'https://romanmedn8n.ru/webhook-test/tarot-prediction',
     
     // Настройки приложения
     freeQuestionsLimit: 3,
