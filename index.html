@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Шепот карт - Тест</title>
+    
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #fff;
+            min-height: 100vh;
+            padding: 10px;
+            user-select: none;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: calc(100vh - 20px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #b0b0b0;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .status-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .status-value {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-title {
+            color: #ffd700;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn.success {
+            background: linear-gradient(45deg, #4ade80, #22c55e);
+        }
+
+        .btn.error {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            padding: 2px 0;
+        }
+
+        .log-entry.success { color: #4ade80; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.info { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">✨ Шепот карт ✨</div>
+            <div class="subtitle">Тестирование подключений</div>
+        </div>
+
+        <div class="status-info">
+            <div class="status-row">
+                <span>Telegram WebApp:</span>
+                <span class="status-value" id="tg-status">Проверяем...</span>
+            </div>
+            <div class="status-row">
+                <span>Пользователь:</span>
+                <span class="status-value" id="user-info">Загружаем...</span>
+            </div>
+            <div class="status-row">
+                <span>Google Sheets:</span>
+                <span class="status-value" id="sheets-status">Не тестировалось</span>
+            </div>
+            <div class="status-row">
+                <span>n8n API:</span>
+                <span class="status-value" id="n8n-status">Не тестировалось</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔗 Тесты подключений</div>
+            
+            <button class="btn" onclick="testGoogleSheets()">
+                📊 Тест Google Sheets
+            </button>
+            
+            <button class="btn" onclick="testN8nWebhook()">
+                🤖 Тест n8n Webhook
+            </button>
+            
+            <button class="btn" onclick="testTelegramFeatures()">
+                💬 Тест Telegram функций
+            </button>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📝 Лог тестирования</div>
+            <div class="log" id="test-log"></div>
+        </div>
+    </div>
+
+    <script>
+        let tg;
+        let currentUser = null;
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            initTelegram();
+            logMessage('Приложение запущено', 'info');
+        });
+
+        function initTelegram() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.expand();
+                
+                document.getElementById('tg-status').textContent = '✅ Подключен';
+                
+                const user = tg.initDataUnsafe?.user;
+                if (user) {
+                    currentUser = user;
+                    document.getElementById('user-info').textContent = `${user.first_name || 'Пользователь'}`;
+                    logMessage(`Пользователь: ${user.first_name} (ID: ${user.id})`, 'success');
+                } else {
+                    document.getElementById('user-info').textContent = 'Тестовый режим';
+                    currentUser = {id: 12345, first_name: 'Test User'};
+                    logMessage('Режим разработки (без Telegram)', 'info');
+                }
+            } else {
+                document.getElementById('tg-status').textContent = '❌ Не найден';
+                document.getElementById('user-info').textContent = 'Тестовый режим';
+                currentUser = {id: 12345, first_name: 'Test User'};
+                logMessage('Telegram WebApp не найден, тестовый режим', 'error');
+            }
+        }
+
+        async function testGoogleSheets() {
+            logMessage('Начинаем тест Google Sheets...', 'info');
+            
+            try {
+                // Тестируем URL из вашего n8n workflow
+                const testUrl = 'https://romanmedn8n.ru/webhook/tarot-get-profile';
+                
+                const response = await fetch(testUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('sheets-status').textContent = '✅ Работает';
+                    logMessage(`Google Sheets: OK. Данные получены: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                document.getElementById('sheets-status').textContent = '❌ Ошибка';
+                logMessage(`Google Sheets: Ошибка - ${error.message}`, 'error');
+            }
+        }
+
+        async function testN8nWebhook() {
+            logMessage('Начинаем тест n8n Webhook...', 'info');
+            
+            try {
+                // Тестируем URL генерации предсказания из вашего workflow
+                const testUrl = 'https://romanmedn8n.ru/webhook/tarot-prediction';
+                
+                const response = await fetch(testUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: 'question',
+                        card: {
+                            name: 'Шут',
+                            symbol: '🃏',
+                            meaning: 'Новые начинания'
+                        },
+                        question: 'Тестовый вопрос',
+                        userName: currentUser.first_name
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('n8n-status').textContent = '✅ Работает';
+                    logMessage(`n8n: OK. Предсказание: ${data.prediction || 'Получено'}`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                document.getElementById('n8n-status').textContent = '❌ Ошибка';
+                logMessage(`n8n: Ошибка - ${error.message}`, 'error');
+            }
+        }
+
+        function testTelegramFeatures() {
+            logMessage('Тестируем Telegram функции...', 'info');
+            
+            if (!tg) {
+                logMessage('Telegram WebApp недоступен', 'error');
+                return;
+            }
+
+            try {
+                // Тест основных функций
+                logMessage(`MainButton доступна: ${!!tg.MainButton}`, 'info');
+                logMessage(`HapticFeedback доступен: ${!!tg.HapticFeedback}`, 'info');
+                logMessage(`Платформа: ${tg.platform}`, 'info');
+                logMessage(`Версия: ${tg.version}`, 'info');
+                
+                // Тест уведомления
+                if (tg.showAlert) {
+                    tg.showAlert('Тестовое уведомление работает!');
+                    logMessage('Уведомление отправлено', 'success');
+                }
+                
+                // Тест вибрации
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                    logMessage('Тактильный отклик отправлен', 'success');
+                }
+
+            } catch (error) {
+                logMessage(`Ошибка тестирования Telegram: ${error.message}`, 'error');
+            }
+        }
+
+        function logMessage(message, type = 'info') {
+            const logContainer = document.getElementById('test-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
